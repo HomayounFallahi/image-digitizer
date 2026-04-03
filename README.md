@@ -2,13 +2,27 @@
 
 **Image Digitizer** is a high-precision, browser-based tool designed to extract numeric data points from images of graphs and plots. This application simplifies the process of converting visual data in research papers, legacy documents, or screenshots back into usable datasets like CSV or JSON.
 
----
+**Developed by:** [Homayoun Fallahi](https://ir.linkedin.com/in/homayoun-fallahi)
 
 ---
 
-### Key Features
+gif
 
-- **Multi-Scale Support**: Accurately handles Linear, Logarithmic ($Log_{10}$), Natural Log ($ln$), and Inverse ($1/x$) axes.
+---
+
+## ⚙️ Installation & Usage
+
+### Single-File Application
+
+1. [Download](https://github.com/HomayounFallahi/image-digitizer/releases/download/releases/Image.Digitizer.html) `Image.Digitizer.html` from the from the Releases page.
+2. Open the file in any modern web browser (Chrome, Edge, Firefox).
+3. No installation, internet connection, or server setup is required.
+
+---
+
+### ✨ Key Features
+
+- **Multi-Scale Support**: Accurately handles Linear, Logarithmic (Log_{10}), Natural Log (ln), and Inverse (1/x) axes.
   
 - **4-Point Calibration**: Uses a robust coordinate transformation system based on four user-defined reference points (C1-C4) to ensure spatial accuracy.
   
@@ -23,7 +37,7 @@
 
 ---
 
-### Getting Started
+### 🚀 Getting Started
 
 Since this is a client-side web application, **no installation** is required.
 
@@ -52,7 +66,7 @@ Since this is a client-side web application, **no installation** is required.
 
 ---
 
-### Technical Overview
+### 🛠️ Technical Overview
 
 - **Core Logic**: The app uses 3x3 matrix determinants to solve for affine transformation coefficients, mapping pixel coordinates to a linearized coordinate system.
   

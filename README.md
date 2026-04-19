@@ -5,8 +5,10 @@
 **Developed by:** [Homayoun Fallahi](https://ir.linkedin.com/in/homayoun-fallahi)
 
 ---
+Here is quick tutorial for the app:
 
-gif
+
+https://github.com/HomayounFallahi/image-digitizer/blob/main/Tutorial_Image_Digitizer.mp4
 
 ---
 

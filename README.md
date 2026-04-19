@@ -8,7 +8,11 @@
 
 ## Video Tutorial
 
-[![Watch the video]([https://img.youtube.com/vi/VIDEO_ID/0.jpg](https://github.com/HomayounFallahi/image-digitizer/blob/main/Tutorial_Image_Digitizer.mp4))]([https://www.youtube.com/watch?v=VIDEO_ID](https://github.com/HomayounFallahi/image-digitizer/blob/main/Tutorial_Image_Digitizer.mp4))
+[Watch the tutorial video](files/Tutorial_Image_Digitizer.mp4)
+
+<video controls>
+  <source src="files/Tutorial_Image_Digitizer.mp4" type="video/mp4">
+</video>
 
 ---
 

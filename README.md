@@ -7,7 +7,7 @@
 ---
 ## Video Tutorial
 
-[![Watch the tutorial](https://github.com/HomayounFallahi/image-digitizer/blob/main/Tutorial_Image_Digitizer.mp4)
+![Watch the tutorial](https://github.com/HomayounFallahi/image-digitizer/blob/main/Tutorial_Image_Digitizer.mp4)
 
 
 ---

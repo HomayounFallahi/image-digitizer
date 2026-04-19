@@ -5,10 +5,10 @@
 **Developed by:** [Homayoun Fallahi](https://ir.linkedin.com/in/homayoun-fallahi)
 
 ---
+
 ## Video Tutorial
 
-![Watch the tutorial](https://github.com/HomayounFallahi/image-digitizer/blob/main/Tutorial_Image_Digitizer.mp4)
-
+[![Watch the video](https://img.youtube.com/vi/VIDEO_ID/0.jpg)]([https://www.youtube.com/watch?v=VIDEO_ID](https://github.com/HomayounFallahi/image-digitizer/blob/main/Tutorial_Image_Digitizer.mp4))
 
 ---
 

@@ -8,11 +8,7 @@
 
 ## Video Tutorial
 
-[Watch the tutorial video](files/Tutorial_Image_Digitizer.mp4)
-
-<video controls>
-  <source src="Tutorial_Image_Digitizer.mp4" type="video/mp4">
-</video>
+[![Watch Demo](demo.gif)](https://your-video-link.com)
 
 ---
 

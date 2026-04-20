@@ -7,6 +7,7 @@
 ---
 
 ## Video Tutorial
+(Click to play)
 
 <p align="center">
   <a href="https://github.com/HomayounFallahi/image-digitizer/raw/refs/heads/main/Tutorial_Image_Digitizer.mp4">

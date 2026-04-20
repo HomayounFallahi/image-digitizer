@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/HomayounFallahi/image-digitizer/raw/refs/heads/main/Tutorial_Image_Digitizer.mp4">
-    <img src="./thumbnail.png" width="600" alt="Watch Tutorial"/>
+    <img src="./thumbnail.png" width="800" alt="Watch Tutorial"/>
   </a>
 </p>
 

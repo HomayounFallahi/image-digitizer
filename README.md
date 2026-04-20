@@ -8,7 +8,11 @@
 
 ## Video Tutorial
 
-[Download or watch video](./[demo.mp4](https://github.com/HomayounFallahi/image-digitizer/raw/refs/heads/main/Tutorial_Image_Digitizer.mp4))
+<p align="center">
+  <a href="https://github.com/HomayounFallahi/image-digitizer/raw/refs/heads/main/Tutorial_Image_Digitizer.mp4">
+    <img src="./thumbnail.png" width="600" alt="Watch Tutorial"/>
+  </a>
+</p>
 
 ---
 

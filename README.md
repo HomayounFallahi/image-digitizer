@@ -8,7 +8,7 @@
 
 ## Video Tutorial
 
-[![Watch Demo](demo.gif)](https://your-video-link.com)
+[Download or watch video](./[demo.mp4](https://github.com/HomayounFallahi/image-digitizer/raw/refs/heads/main/Tutorial_Image_Digitizer.mp4))
 
 ---
 

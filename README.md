@@ -24,7 +24,9 @@
 1. [Download](https://github.com/HomayounFallahi/image-digitizer/releases/download/releases/Image.Digitizer.html) `Image.Digitizer.html` from the from the Releases page.
 2. Open the file in any modern web browser (Chrome, Edge, Firefox).
 3. No installation, internet connection, or server setup is required.
-
+---
+## Or Access it Online:
+🔗 **[WebApp](https://homayounfallahi.github.io/image-digitizer/)**
 ---
 
 ### ✨ Key Features

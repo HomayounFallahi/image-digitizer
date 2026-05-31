@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Digitizer</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-app: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --radius: 6px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .header-left { display: flex; flex-direction: column; }
+        
+        h1 { font-size: 1.25rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+        
+        .credits {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+        
+        .linkedin-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .linkedin-link:hover { text-decoration: underline; }
+
+        .header-controls { display: flex; gap: 0.5rem; align-items: flex-start; }
+
+        /* --- Layout --- */
+        main { display: flex; flex: 1; height: calc(100vh - 90px); overflow: hidden; }
+
+        /* --- Sidebar --- */
+        aside {
+            width: 360px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 5;
+            padding: 1rem;
+            gap: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .panel-section { display: flex; flex-direction: column; gap: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+        .panel-section:last-child { border-bottom: none; }
+        .hidden-by-mode { display: none !important; }
+
+        h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.25rem; }
+
+        label { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem; display: block; }
+        .control-group { display: flex; gap: 0.5rem; align-items: center; }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius);
+            font-size: 0.9rem; transition: border-color 0.2s;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
+        
+        input[type="checkbox"] { width: auto; margin-right: 0.5rem; cursor: pointer; }
+        label.checkbox-label { display: flex; align-items: center; cursor: pointer; margin-bottom: 0; }
+
+        .btn {
+            padding: 0.5rem 1rem; border-radius: var(--radius); border: none; cursor: pointer;
+            font-size: 0.9rem; font-weight: 500; transition: background 0.2s, transform 0.1s;
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-secondary { background: white; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-secondary:hover { background: #f1f5f9; }
+        .btn-danger { background: #fee2e2; color: var(--danger); }
+        .btn-danger:hover { background: #fecaca; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+        .btn-block { width: 100%; }
+
+        /* --- Mode Toggles --- */
+        .mode-switcher { display: flex; background: #f1f5f9; padding: 0.25rem; border-radius: var(--radius); }
+        .mode-btn {
+            flex: 1; text-align: center; padding: 0.4rem; font-size: 0.85rem; cursor: pointer;
+            border-radius: 4px; color: var(--text-muted); transition: all 0.2s;
+        }
+        .mode-btn.active { background: white; color: var(--primary); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        /* --- Calibration Grid --- */
+        .calib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .calib-point-row { background: #f8fafc; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border); }
+        .calib-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+
+        /* --- Data Table --- */
+        .data-panel { flex: 1; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); background: white; min-height: 200px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: #f8fafc; position: sticky; top: 0; text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+        td { padding: 0.5rem; border-bottom: 1px solid var(--border); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8fafc; }
+
+        /* --- Canvas Area --- */
+        #canvas-container {
+            flex: 1; position: relative; background: #e2e8f0; overflow: hidden;
+            display: block; 
+        }
+
+        canvas {
+            position: absolute;
+            top: 0; left: 0;
+            background: white;
+            box-shadow: var(--shadow);
+            display: block;
+        }
+        
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            background: white; 
+            box-shadow: var(--shadow);
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            width: 320px;
+            max-width: 90%;
+        }
+
+        /* --- Magnifier Element --- */
+        #magnifier {
+            position: absolute;
+            width: 200px; height: 200px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            overflow: hidden;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            background: white;
+            z-index: 50;
+        }
+        #magCanvas { width: 100%; height: 100%; display: block; }
+
+        /* --- Tooltip --- */
+        #tooltip {
+            position: absolute; background: rgba(0, 0, 0, 0.8); color: white; padding: 0.5rem;
+            border-radius: 4px; font-size: 0.8rem; pointer-events: none; display: none;
+            z-index: 100; white-space: pre-line;
+        }
+
+        #toast { position: fixed; bottom: 20px; right: 20px; background: var(--text-main); color: white; padding: 10px 20px; border-radius: var(--radius); font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 200; }
+        #loading { position: absolute; inset: 0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 50; }
+
+        /* --- Help Modal --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 1rem;
+        }
+        .modal {
+            width: 100%;
+            max-width: 560px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 1rem 1rem 0.75rem;
+        }
+        .modal h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .modal p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 0.6rem;
+        }
+        .modal ul {
+            margin: 0.25rem 0 0.75rem 1rem;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <h1>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                Image Digitizer
+            </h1>
+            <div class="credits">
+                Developed by <a href="https://www.linkedin.com/in/homayoun-fallahi/" target="_blank" class="linkedin-link">Homayoun Fallahi</a> | <a href="https://www.linkedin.com/in/homayoun-fallahi/" target="_blank" class="linkedin-link">LinkedIn Profile</a> | Jan 6, 2026 | Version 3.1
+            </div>
+        </div>
+        <div class="header-controls">
+            <input type="file" id="fileInput" accept="image/png, image/jpeg" style="display: none;">
+            <input type="file" id="sessionInput" accept=".json" style="display: none;">
+            
+            <button class="btn btn-secondary btn-sm" onclick="app.showHelp()">Help</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fileInput').click()">Upload Image</button>
+            <button class="btn btn-secondary btn-sm" onclick="app.pasteImageFromClipboard()">Paste Image</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sessionInput').click()">Load Session</button>
+            <button class="btn btn-primary btn-sm" onclick="app.saveSession()">Save Session</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- SIDEBAR -->
+        <aside>
+            <!-- Modes -->
+            <div class="panel-section">
+                <h2>Mode</h2>
+                <div class="mode-switcher">
+                    <div class="mode-btn active" id="btn-mode-calib" onclick="app.setMode('calibration')">Calibration</div>
+                    <div class="mode-btn" id="btn-mode-digit" onclick="app.setMode('digitize')">Digitize</div>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
+                    <span id="mode-desc">Step 1: Select 4 points (C1-C4) to define axes.</span>
+                </div>
+            </div>
+
+            <!-- Data Visualization & Sorting -->
+            <div class="panel-section" id="digitize-controls-top">
+                <h2>Data Visualization</h2>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="connect-toggle" onchange="app.toggleConnect(this.checked)"> Connect Points (Line Trace)
+                </label>
+                
+                <label>Sort Data Order</label>
+                <select id="sort-mode" onchange="app.applySort(this.value)">
+                    <option value="default">Default (Click Order)</option>
+                    <option value="x_asc">X: Ascending</option>
+                    <option value="x_desc">X: Descending</option>
+                    <option value="y_asc">Y: Ascending</option>
+                    <option value="y_desc">Y: Descending</option>
+                </select>
+            </div>
+
+            <!-- Magnifier Controls -->
+            <div class="panel-section">
+                <h2>Magnifier Tool</h2>
+                <div class="control-group">
+                    <input type="checkbox" id="mag-toggle" onchange="app.toggleMagnifier(this.checked)">
+                    <label for="mag-toggle" style="margin:0; cursor:pointer;">Enable Magnifier</label>
+                </div>
+                <div id="mag-controls" style="display:none; opacity: 0.7;">
+                    <label>Zoom Level: <span id="mag-val">4x</span></label>
+                    <div class="control-group">
+                        <input type="range" id="mag-level" min="2" max="10" step="1" value="4" oninput="app.setMagLevel(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calibration Controls -->
+            <div class="panel-section" id="calibration-controls">
+                <h2>Axis Configuration</h2>
+                <div class="control-group">
+                    <div style="flex:1">
+                        <label>X-Axis Type</label>
+                        <select id="x-axis-type" onchange="app.updateCalibration()">
+                            <option value="linear">Linear</option>
+                            <option value="log">Logarithmic (Log10)</option>
+                            <option value="ln">Natural Log (ln)</option>
+                            <option value="inverse">Inverse (1/x)</option>
+                        </select>
+                    </div>
+                    <div style="flex:1">
+                        <label>Y-Axis Type</label>
+                        <select id="y-axis-type" onchange="app.updateCalibration()">
+                            <option value="linear">Linear</option>
+                            <option value="log">Logarithmic (Log10)</option>
+                            <option value="ln">Natural Log (ln)</option>
+                            <option value="inverse">Inverse (1/x)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <label>Reference Points (Real Values)</label>
+                    <div class="calib-grid">
+                        <div class="calib-point-row">
+                            <div class="calib-label">C1</div>
+                            <input type="text" id="p1-x" placeholder="X" inputmode="decimal" data-calib-input>
+                            <input type="text" id="p1-y" placeholder="Y" inputmode="decimal" data-calib-input style="margin-top: 4px;">
+                        </div>
+                        <div class="calib-point-row">
+                            <div class="calib-label">C2</div>
+                            <input type="text" id="p2-x" placeholder="X" inputmode="decimal" data-calib-input>
+                            <input type="text" id="p2-y" placeholder="Y" inputmode="decimal" data-calib-input style="margin-top: 4px;">
+                        </div>
+                        <div class="calib-point-row">
+                            <div class="calib-label">C3</div>
+                            <input type="text" id="p3-x" placeholder="X" inputmode="decimal" data-calib-input>
+                            <input type="text" id="p3-y" placeholder="Y" inputmode="decimal" data-calib-input style="margin-top: 4px;">
+                        </div>
+                        <div class="calib-point-row">
+                            <div class="calib-label">C4</div>
+                            <input type="text" id="p4-x" placeholder="X" inputmode="decimal" data-calib-input>
+                            <input type="text" id="p4-y" placeholder="Y" inputmode="decimal" data-calib-input style="margin-top: 4px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group" style="margin-top: 1rem;">
+                    <button class="btn btn-primary btn-block" onclick="app.recalculateTransform()">Calibrate</button>
+                    <button class="btn btn-danger btn-block" onclick="app.resetCalibration()">Reset Calibration</button>
+                </div>
+            </div>
+
+            <!-- Data Output -->
+            <div class="panel-section" id="digitize-controls-bottom" style="flex: 1; display: flex; flex-direction: column; border-bottom: none; min-height: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                    <h2 style="margin-bottom: 0;">Extracted Data (<span id="point-count">0</span>)</h2>
+                    <button class="btn btn-secondary btn-sm" onclick="app.copyDataForExcel()">Copy for Excel</button>
+                </div>
+                <div class="data-panel">
+                    <table id="data-table">
+                        <thead><tr><th>ID</th><th>X (Val)</th><th>Y (Val)</th><th>Action</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="control-group" style="margin-top: 1rem;">
+                    <button class="btn btn-secondary btn-sm" onclick="app.undoPoint()">Undo</button>
+                    <button class="btn btn-danger btn-sm" onclick="app.clearPoints()">Clear All</button>
+                </div>
+                <div style="border-top: 1px solid var(--border); margin-top: 0.75rem; padding-top: 0.6rem;">
+                    <label style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0;">Export Data</label>
+                </div>
+                <div class="control-group" style="margin-top: 0.5rem; margin-bottom: 1.25rem;">
+                    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="app.exportData('csv')">Export CSV</button>
+                    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="app.exportData('json')">Export JSON</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CANVAS AREA -->
+        <div id="canvas-container">
+            <div id="empty-state" class="empty-state">
+                <h3>No Image Loaded</h3>
+                <p>Drag & Drop an image here or click "Upload Image"</p>
+            </div>
+            <canvas id="appCanvas"></canvas>
+            
+            <!-- Magnifier Component -->
+            <div id="magnifier">
+                <canvas id="magCanvas"></canvas>
+            </div>
+
+            <div id="loading">Processing...</div>
+            <div id="tooltip"></div>
+        </div>
+    </main>
+
+    <div id="toast"></div>
+
+    <div id="help-modal" class="modal-overlay" onclick="app.hideHelp(event)">
+        <div class="modal">
+            <h3>Quick Help</h3>
+            <p>This app converts graph image pixels into real numeric data points.</p>
+            <ul>
+                <li>Upload a graph image.</li>
+                <li>In Calibration mode, click C1-C4 and enter their real values, then press Calibrate.</li>
+                <li>Choose X-Axis Type and Y-Axis Type (Linear, Log, ln, or Inverse) to match your chart scale.</li>
+                <li>Switch to Digitize mode and click points to extract P1, P2, and more.</li>
+                <li>Enable Magnifier for precision clicking; red guides help align the cursor.</li>
+                <li>Sort, connect, undo, clear, and export data as CSV or JSON.</li>
+            </ul>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-sm" onclick="app.hideHelp()">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Core Math Logic
+         */
+        const MathUtils = {
+            parseNumericInput(value) {
+                const text = String(value ?? '').trim();
+                if (!text) return NaN;
+                const parsed = Number(text);
+                return Number.isFinite(parsed) ? parsed : NaN;
+            },
+
+            solve3x3(A, B) {
+                const M = [ [...A[0], B[0]], [...A[1], B[1]], [...A[2], B[2]] ];
+                const n = 3;
+                for (let i = 0; i < n; i++) {
+                    let maxEl = Math.abs(M[i][i]), maxRow = i;
+                    for (let k = i + 1; k < n; k++) {
+                        if (Math.abs(M[k][i]) > maxEl) { maxEl = Math.abs(M[k][i]); maxRow = k; }
+                    }
+                    for (let k = i; k < n + 1; k++) { const tmp = M[maxRow][k]; M[maxRow][k] = M[i][k]; M[i][k] = tmp; }
+                    for (let k = i + 1; k < n; k++) {
+                        const c = -M[k][i] / M[i][i];
+                        for (let j = i; j < n + 1; j++) { if (i === j) M[k][j] = 0; else M[k][j] += c * M[i][j]; }
+                    }
+                }
+                const x = new Array(n).fill(0);
+                for (let i = n - 1; i >= 0; i--) {
+                    x[i] = M[i][n] / M[i][i];
+                    for (let k = i - 1; k >= 0; k--) { M[k][n] -= M[k][i] * x[i]; }
+                }
+                return x;
+            },
+
+            applyScale(val, type) {
+                if (type === 'log') return val > 0 ? Math.log10(val) : NaN;
+                if (type === 'ln') return val > 0 ? Math.log(val) : NaN;
+                if (type === 'inverse') return val !== 0 ? 1 / val : NaN;
+                return val;
+            },
+
+            reverseScale(val, type) {
+                if (type === 'log') return Math.pow(10, val);
+                if (type === 'ln') return Math.exp(val);
+                if (type === 'inverse') return 1 / val;
+                return val;
+            }
+        };
+
+        /**
+         * Main Application Class
+         */
+        class ImageDigitizer {
+            constructor() {
+                this.canvas = document.getElementById('appCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.container = document.getElementById('canvas-container');
+                
+                // Magnifier
+                this.magDiv = document.getElementById('magnifier');
+                this.magCanvas = document.getElementById('magCanvas');
+                this.magCtx = this.magCanvas.getContext('2d');
+                this.magCanvas.width = 200; this.magCanvas.height = 200;
+                this.showMagnifier = false;
+                this.magLevel = 4;
+
+                // State
+                this.image = null;
+                this.mode = 'calibration'; 
+                this.view = { x: 0, y: 0, scale: 1 };
+                this.isDragging = false;
+                this.lastMouse = { x: 0, y: 0 };
+                this.cursorPos = null;
+
+                this.calibPixels = [null, null, null, null]; 
+                this.digitizedPoints = []; 
+                this.xType = 'linear';
+                this.yType = 'linear';
+                this.sessionSaveHandle = null;
+
+                // Visualization
+                this.connectPoints = false;
+                this.sortMode = 'default';
+
+                this.transform = { a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 };
+                this.isCalibrated = false;
+
+                this.calibrationSection = document.getElementById('calibration-controls');
+                this.digitizeSections = [
+                    document.getElementById('digitize-controls-top'),
+                    document.getElementById('digitize-controls-bottom')
+                ];
+
+                this.initEventListeners();
+                this.initCalibrationNavigation();
+                this.resizeCanvas();
+                this.updateModeSections();
+                this.animate();
+            }
+
+            initEventListeners() {
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileSelect(e));
+                document.getElementById('sessionInput').addEventListener('change', (e) => this.handleSessionSelect(e));
+                window.addEventListener('paste', (e) => this.handlePasteEvent(e));
+                
+                this.container.addEventListener('dragover', (e) => { e.preventDefault(); });
+                this.container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files.length) this.handleFile(e.dataTransfer.files[0]);
+                });
+                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                window.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                window.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                this.canvas.addEventListener('mouseleave', () => {
+                    this.cursorPos = null;
+                    this.draw();
+                });
+                this.canvas.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
+                this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
+                window.addEventListener('resize', () => this.resizeCanvas());
+                window.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); this.undoPoint(); }
+                });
+            }
+
+            initCalibrationNavigation() {
+                this.calibrationInputs = Array.from(document.querySelectorAll('[data-calib-input]'));
+                this.calibrationInputs.forEach((input) => {
+                    input.addEventListener('keydown', (e) => this.handleCalibrationInputKeydown(e));
+                });
+            }
+
+            handleCalibrationInputKeydown(e) {
+                const navigationKeys = ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown'];
+                if (!navigationKeys.includes(e.key)) return;
+
+                const currentIndex = this.calibrationInputs.indexOf(e.currentTarget);
+                if (currentIndex === -1) return;
+
+                const step = (e.key === 'ArrowLeft' || e.key === 'ArrowUp') ? -1 : 1;
+                const nextInput = this.calibrationInputs[currentIndex + step];
+                if (!nextInput) return;
+
+                e.preventDefault();
+                nextInput.focus();
+                nextInput.select();
+            }
+
+            // --- SESSION MANAGEMENT ---
+            saveSession() {
+                if (!this.image) return this.showToast('Load an image first to save a session.');
+                
+                const calibValues = [];
+                for(let i=1; i<=4; i++) {
+                    calibValues.push({
+                        x: document.getElementById(`p${i}-x`).value.trim(),
+                        y: document.getElementById(`p${i}-y`).value.trim()
+                    });
+                }
+
+                const sessionData = {
+                    version: '2.3',
+                    timestamp: new Date().toISOString(),
+                    imageData: this.image.src, // Base64
+                    calibPixels: this.calibPixels,
+                    digitizedPoints: this.digitizedPoints,
+                    calibValues: calibValues,
+                    axisTypes: { x: this.xType, y: this.yType },
+                    isCalibrated: this.isCalibrated,
+                    transform: this.transform,
+                    visualization: { connect: this.connectPoints, sort: this.sortMode }
+                };
+
+                const saveWithHandle = async (handle) => {
+                    const writable = await handle.createWritable();
+                    await writable.write(JSON.stringify(sessionData, null, 2));
+                    await writable.close();
+                    this.sessionSaveHandle = handle;
+                    this.showToast('Session saved successfully.');
+                };
+
+                const openSavePicker = async () => {
+                    if (!window.showSaveFilePicker) {
+                        throw new Error('Save picker unavailable');
+                    }
+
+                    return await window.showSaveFilePicker({
+                        suggestedName: `digitizer_session_${new Date().getTime()}.json`,
+                        types: [{
+                            description: 'JSON Session File',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
+                };
+
+                (async () => {
+                    try {
+                        if (this.sessionSaveHandle) {
+                            const permission = await this.sessionSaveHandle.queryPermission({ mode: 'readwrite' });
+                            if (permission === 'granted') {
+                                await saveWithHandle(this.sessionSaveHandle);
+                                return;
+                            }
+
+                            if (permission === 'prompt') {
+                                const requested = await this.sessionSaveHandle.requestPermission({ mode: 'readwrite' });
+                                if (requested === 'granted') {
+                                    await saveWithHandle(this.sessionSaveHandle);
+                                    return;
+                                }
+                            }
+                        }
+
+                        const handle = await openSavePicker();
+                        await saveWithHandle(handle);
+                    } catch (err) {
+                        console.error(err);
+
+                        if (err && err.name === 'AbortError') {
+                            this.showToast('Save cancelled.');
+                            return;
+                        }
+
+                        const blob = new Blob([JSON.stringify(sessionData, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `digitizer_session_${new Date().getTime()}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        this.showToast('Session downloaded. Your browser does not support direct file overwrite here.');
+                    }
+                })();
+            }
+
+            handleSessionSelect(e) {
+                if (e.target.files.length) this.loadSession(e.target.files[0]);
+            }
+
+            loadSession(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const sessionData = JSON.parse(e.target.result);
+                        
+                        // Load Image
+                        const img = new Image();
+                        img.onload = () => {
+                            this.image = img;
+                            this.resetView();
+                            document.getElementById('empty-state').style.display = 'none';
+                            
+                            // Restore State
+                            this.calibPixels = sessionData.calibPixels;
+                            this.digitizedPoints = sessionData.digitizedPoints;
+                            this.xType = sessionData.axisTypes.x;
+                            this.yType = sessionData.axisTypes.y;
+                            this.isCalibrated = sessionData.isCalibrated;
+                            this.transform = sessionData.transform;
+                            this.connectPoints = sessionData.visualization.connect;
+                            this.sortMode = sessionData.visualization.sort;
+
+                            // Restore Inputs
+                            document.getElementById('x-axis-type').value = this.xType;
+                            document.getElementById('y-axis-type').value = this.yType;
+                            document.getElementById('connect-toggle').checked = this.connectPoints;
+                            document.getElementById('sort-mode').value = this.sortMode;
+
+                            for(let i=0; i<4; i++) {
+                                document.getElementById(`p${i+1}-x`).value = sessionData.calibValues?.[i]?.x ?? '';
+                                document.getElementById(`p${i+1}-y`).value = sessionData.calibValues?.[i]?.y ?? '';
+                            }
+
+                            // UI Updates
+                            this.setMode(this.isCalibrated ? 'digitize' : 'calibration');
+                            this.updateTable();
+                            this.draw();
+                            this.showToast('Session loaded successfully.');
+                        };
+                        img.onerror = () => this.showToast('Error loading image from session.');
+                        img.src = sessionData.imageData;
+
+                    } catch (err) {
+                        console.error(err);
+                        this.showToast('Invalid session file.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            resizeCanvas() {
+                this.canvas.width = this.container.clientWidth;
+                this.canvas.height = this.container.clientHeight;
+                this.draw();
+            }
+
+            handleFileSelect(e) { if (e.target.files.length) this.handleFile(e.target.files[0]); }
+
+            handleFile(file) {
+                if (!file || !file.type || !file.type.match('image.*')) return this.showToast('Please upload an image file.');
+                this.loadImageFromBlob(file, 'Image loaded. Please calibrate.');
+            }
+
+            loadImageFromBlob(blob, successMessage = 'Image loaded. Please calibrate.') {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.image = img;
+                        this.resetView();
+                        document.getElementById('empty-state').style.display = 'none';
+                        this.resetCalibration(false); 
+                        this.showToast(successMessage);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
+            }
+
+            handlePasteEvent(e) {
+                if (!e.clipboardData || !e.clipboardData.items) return;
+                for (const item of e.clipboardData.items) {
+                    if (item.type && item.type.startsWith('image/')) {
+                        const blob = item.getAsFile();
+                        if (blob) {
+                            e.preventDefault();
+                            this.loadImageFromBlob(blob, 'Image pasted from clipboard. Please calibrate.');
+                            return;
+                        }
+                    }
+                }
+            }
+
+            async pasteImageFromClipboard() {
+                if (!navigator.clipboard || !navigator.clipboard.read) {
+                    this.showToast('Clipboard read API unavailable. Use Ctrl+V to paste an image.');
+                    return;
+                }
+
+                try {
+                    const clipboardItems = await navigator.clipboard.read();
+                    for (const item of clipboardItems) {
+                        const imageType = item.types.find((t) => t.startsWith('image/'));
+                        if (imageType) {
+                            const blob = await item.getType(imageType);
+                            this.loadImageFromBlob(blob, 'Image pasted from clipboard. Please calibrate.');
+                            return;
+                        }
+                    }
+                    this.showToast('No image found in clipboard.');
+                } catch (err) {
+                    console.error(err);
+                    this.showToast('Clipboard access denied. Use Ctrl+V to paste an image.');
+                }
+            }
+
+            resetView() {
+                if (!this.image) return;
+                
+                // Calculate scale to fit image exactly within canvas dimensions (Contain mode)
+                const scaleX = this.canvas.width / this.image.width;
+                const scaleY = this.canvas.height / this.image.height;
+                
+                // Choose the smaller scale to ensure entire image fits
+                this.view.scale = Math.min(scaleX, scaleY) * 0.9; // 0.9 adds a small padding margin
+                
+                // Center the image
+                this.view.x = (this.canvas.width - this.image.width * this.view.scale) / 2;
+                this.view.y = (this.canvas.height - this.image.height * this.view.scale) / 2;
+                
+                this.draw();
+            }
+
+            setMode(mode) {
+                if (mode === 'digitize' && !this.isCalibrated) {
+                    this.showToast('Calibration is mandatory before digitizing. Please select C1-C4 and Calculate.');
+                    return;
+                }
+
+                this.mode = mode;
+                document.getElementById('btn-mode-calib').classList.toggle('active', mode === 'calibration');
+                document.getElementById('btn-mode-digit').classList.toggle('active', mode === 'digitize');
+                this.container.className = mode === 'calibration' ? 'mode-calibrate' : 'mode-digitize';
+                
+                const desc = document.getElementById('mode-desc');
+                if (mode === 'calibration') {
+                    desc.textContent = "Select 4 points (C1-C4) on the graph to define axes.";
+                } else {
+                    desc.textContent = "Click on graph to extract data points (P1, P2...).";
+                }
+                this.updateModeSections();
+                this.draw();
+            }
+
+            updateModeSections() {
+                const isCalibrationMode = this.mode === 'calibration';
+                this.calibrationSection.classList.toggle('hidden-by-mode', !isCalibrationMode);
+                this.digitizeSections.forEach(section => {
+                    section.classList.toggle('hidden-by-mode', isCalibrationMode);
+                });
+            }
+
+            toggleConnect(enabled) {
+                this.connectPoints = enabled;
+                this.draw();
+            }
+
+            showHelp() {
+                document.getElementById('help-modal').style.display = 'flex';
+            }
+
+            hideHelp(e) {
+                if (e && e.target && e.target.id !== 'help-modal') return;
+                document.getElementById('help-modal').style.display = 'none';
+            }
+
+            applySort(mode) {
+                this.sortMode = mode;
+                
+                if (mode === 'default') {
+                    this.digitizedPoints.sort((a, b) => a.id - b.id);
+                } else {
+                    if (!this.isCalibrated) {
+                        this.showToast('Calibration required to sort by value. Reverting to default.');
+                        document.getElementById('sort-mode').value = 'default';
+                        this.sortMode = 'default';
+                        return;
+                    }
+
+                    this.digitizedPoints.sort((a, b) => {
+                        const rA = this.pixelToReal(a.x, a.y);
+                        const rB = this.pixelToReal(b.x, b.y);
+                        
+                        if (mode === 'x_asc') return rA.x - rB.x;
+                        if (mode === 'x_desc') return rB.x - rA.x;
+                        if (mode === 'y_asc') return rA.y - rB.y;
+                        if (mode === 'y_desc') return rB.y - rA.y;
+                        return 0;
+                    });
+                }
+
+                this.updateTable();
+                this.draw();
+            }
+
+            resetCalibration(showMsg = true) {
+                this.calibPixels = [null, null, null, null];
+                this.isCalibrated = false;
+                this.transform = { a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 };
+                
+                this.digitizedPoints = []; 
+                this.updateTable();
+
+                this.setMode('calibration');
+                
+                if (showMsg) this.showToast('Calibration and data cleared.');
+                this.draw();
+            }
+
+            toggleMagnifier(enabled) {
+                this.showMagnifier = enabled;
+                document.getElementById('mag-controls').style.display = enabled ? 'block' : 'none';
+                if (!enabled) this.magDiv.style.display = 'none';
+            }
+
+            setMagLevel(val) {
+                this.magLevel = parseInt(val);
+                document.getElementById('mag-val').textContent = this.magLevel + 'x';
+            }
+
+            updateMagnifier(screenX, screenY) {
+                if (!this.showMagnifier || !this.image) {
+                    this.magDiv.style.display = 'none';
+                    return;
+                }
+                const magCtx = this.magCtx;
+                const w = this.magCanvas.width;
+                const h = this.magCanvas.height;
+                this.magDiv.style.display = 'block';
+
+                let left = screenX + 30; let top = screenY + 30;
+                if (left + 200 > this.canvas.width) left = screenX - 230;
+                if (top + 200 > this.canvas.height) top = screenY - 230;
+                this.magDiv.style.left = left + 'px'; this.magDiv.style.top = top + 'px';
+
+                magCtx.clearRect(0, 0, w, h);
+                const sourceCenterX = (screenX - this.view.x) / this.view.scale;
+                const sourceCenterY = (screenY - this.view.y) / this.view.scale;
+                const srcRegionW = w / this.magLevel;
+                const srcRegionH = h / this.magLevel;
+                const srcX = sourceCenterX - srcRegionW / 2;
+                const srcY = sourceCenterY - srcRegionH / 2;
+                
+                magCtx.drawImage(this.image, srcX, srcY, srcRegionW, srcRegionH, 0, 0, w, h);
+                magCtx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+                magCtx.lineWidth = 2;
+                magCtx.beginPath();
+                magCtx.moveTo(w/2, 0); magCtx.lineTo(w/2, h);
+                magCtx.moveTo(0, h/2); magCtx.lineTo(w, h/2);
+                magCtx.stroke();
+            }
+
+            getMousePos(e) { const rect = this.canvas.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
+            screenToImage(sx, sy) { return { x: (sx - this.view.x) / this.view.scale, y: (sy - this.view.y) / this.view.scale }; }
+
+            onMouseDown(e) {
+                if (!this.image || e.button !== 0) return;
+                const pos = this.getMousePos(e);
+                this.isDragging = true;
+                this.lastMouse = pos;
+                if (this.mode === 'calibration') this.addCalibPoint(pos);
+                else if (this.mode === 'digitize') this.addDigitizedPoint(pos);
+            }
+
+            onMouseMove(e) {
+                const pos = this.getMousePos(e);
+                this.cursorPos = pos;
+                this.updateMagnifier(pos.x, pos.y);
+                this.updateTooltip(pos);
+                this.draw();
+                
+                // DRAGGING DISABLED - Image remains locked in place
+                // if (this.isDragging) { ... }
+            }
+
+            onMouseUp(e) { this.isDragging = false; }
+
+            onWheel(e) {
+                // ZOOM DISABLED
+                if (!this.image) return;
+                e.preventDefault(); // Prevent default browser scroll
+                // Zoom logic removed as requested.
+            }
+
+            onRightClick(e) {
+                e.preventDefault();
+                if (this.mode !== 'digitize' || !this.image) return;
+                const pos = this.getMousePos(e);
+                const imgPos = this.screenToImage(pos.x, pos.y);
+                const hitRadius = 10 / this.view.scale;
+                const idx = this.digitizedPoints.findIndex(p => {
+                    const dx = p.x - imgPos.x; const dy = p.y - imgPos.y;
+                    return Math.sqrt(dx*dx + dy*dy) < hitRadius;
+                });
+                if (idx !== -1) { this.digitizedPoints.splice(idx, 1); this.updateTable(); this.draw(); }
+            }
+
+            addCalibPoint(screenPos) {
+                const imgPos = this.screenToImage(screenPos.x, screenPos.y);
+                const emptyIndex = this.calibPixels.findIndex(p => p === null);
+                if (emptyIndex !== -1) { 
+                    this.calibPixels[emptyIndex] = imgPos; 
+                    this.showToast(`Point C${emptyIndex + 1} set.`); 
+                }
+                else { 
+                    this.calibPixels[3] = imgPos; 
+                    this.showToast(`Point C4 updated.`); 
+                }
+                this.draw();
+            }
+
+            updateCalibration() {
+                this.xType = document.getElementById('x-axis-type').value;
+                this.yType = document.getElementById('y-axis-type').value;
+                if (this.isCalibrated) this.recalculateTransform();
+            }
+
+            recalculateTransform() {
+                if (this.calibPixels.includes(null)) return this.showToast('Please select all 4 calibration points (C1-C4) first.');
+                const p1 = { x: MathUtils.parseNumericInput(document.getElementById('p1-x').value), y: MathUtils.parseNumericInput(document.getElementById('p1-y').value) };
+                const p2 = { x: MathUtils.parseNumericInput(document.getElementById('p2-x').value), y: MathUtils.parseNumericInput(document.getElementById('p2-y').value) };
+                const p3 = { x: MathUtils.parseNumericInput(document.getElementById('p3-x').value), y: MathUtils.parseNumericInput(document.getElementById('p3-y').value) };
+                const p4 = { x: MathUtils.parseNumericInput(document.getElementById('p4-x').value), y: MathUtils.parseNumericInput(document.getElementById('p4-y').value) };
+                if ([p1, p2, p3, p4].some(p => isNaN(p.x) || isNaN(p.y))) return this.showToast('Fill all coordinate values for C1-C4.');
+                const mapToLinear = (val, type) => MathUtils.applyScale(val, type);
+                const target = [
+                    { x: mapToLinear(p1.x, this.xType), y: mapToLinear(p1.y, this.yType) },
+                    { x: mapToLinear(p2.x, this.xType), y: mapToLinear(p2.y, this.yType) },
+                    { x: mapToLinear(p3.x, this.xType), y: mapToLinear(p3.y, this.yType) }
+                ];
+                const source = this.calibPixels.slice(0, 3);
+                const A = [[source[0].x, source[0].y, 1], [source[1].x, source[1].y, 1], [source[2].x, source[2].y, 1]];
+                const Bx = [target[0].x, target[1].x, target[2].x];
+                const By = [target[0].y, target[1].y, target[2].y];
+                const coeffsX = MathUtils.solve3x3(A, Bx);
+                const coeffsY = MathUtils.solve3x3(A, By);
+                this.transform = { a: coeffsX[0], b: coeffsX[1], c: coeffsX[2], d: coeffsY[0], e: coeffsY[1], f: coeffsY[2] };
+                this.isCalibrated = true;
+                this.showToast('Calibration successful! You can now digitize.');
+                this.applySort(this.sortMode);
+                this.draw();
+            }
+
+            addDigitizedPoint(screenPos) {
+                if (!this.isCalibrated) return this.showToast('Calibrate image first.');
+                const imgPos = this.screenToImage(screenPos.x, screenPos.y);
+                this.digitizedPoints.push({ x: imgPos.x, y: imgPos.y, id: Date.now() });
+                this.applySort(this.sortMode);
+                this.draw();
+            }
+
+            pixelToReal(px, py) {
+                if (!this.isCalibrated) return { x: null, y: null };
+                const linX = this.transform.a * px + this.transform.b * py + this.transform.c;
+                const linY = this.transform.d * px + this.transform.e * py + this.transform.f;
+                return {
+                    x: MathUtils.reverseScale(linX, this.xType),
+                    y: MathUtils.reverseScale(linY, this.yType)
+                };
+            }
+
+            undoPoint() {
+                if (this.digitizedPoints.length) { 
+                    const maxId = Math.max(...this.digitizedPoints.map(p => p.id));
+                    const idx = this.digitizedPoints.findIndex(p => p.id === maxId);
+                    if (idx !== -1) this.digitizedPoints.splice(idx, 1);
+                    this.updateTable(); 
+                    this.draw(); 
+                }
+            }
+            clearPoints() { if(confirm('Clear points?')) { this.digitizedPoints = []; this.updateTable(); this.draw(); } }
+            removePoint(i) { this.digitizedPoints.splice(i, 1); this.updateTable(); this.draw(); }
+
+            draw() {
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                if (!this.image) return;
+
+                ctx.save();
+                ctx.translate(this.view.x, this.view.y);
+                ctx.scale(this.view.scale, this.view.scale);
+                ctx.drawImage(this.image, 0, 0);
+
+                if (this.connectPoints && this.mode === 'digitize' && this.digitizedPoints.length > 1) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(37, 99, 235, 0.6)'; 
+                    ctx.lineWidth = 2 / this.view.scale;
+                    ctx.moveTo(this.digitizedPoints[0].x, this.digitizedPoints[0].y);
+                    for (let i = 1; i < this.digitizedPoints.length; i++) {
+                        ctx.lineTo(this.digitizedPoints[i].x, this.digitizedPoints[i].y);
+                    }
+                    ctx.stroke();
+                }
+
+                if (this.mode === 'calibration') {
+                    const colors = ['#ef4444', '#22c55e', '#3b82f6', '#f59e0b'];
+                    const labels = ['C1', 'C2', 'C3', 'C4'];
+                    this.calibPixels.forEach((p, i) => {
+                        if (p) {
+                            ctx.beginPath(); ctx.arc(p.x, p.y, 6 / this.view.scale, 0, Math.PI * 2);
+                            ctx.fillStyle = colors[i]; ctx.fill();
+                            ctx.strokeStyle = 'white'; ctx.lineWidth = 2 / this.view.scale; ctx.stroke();
+                            ctx.fillStyle = 'black'; ctx.font = `${14 / this.view.scale}px sans-serif`;
+                            ctx.fillText(labels[i], p.x + 10/this.view.scale, p.y - 10/this.view.scale);
+                        }
+                    });
+                }
+
+                if (this.mode === 'digitize') {
+                    ctx.fillStyle = '#2563eb';
+                    this.digitizedPoints.forEach((p, i) => {
+                        ctx.beginPath(); ctx.arc(p.x, p.y, 4 / this.view.scale, 0, Math.PI * 2);
+                        ctx.fill(); ctx.strokeStyle = 'white'; ctx.lineWidth = 2 / this.view.scale; ctx.stroke();
+
+                        ctx.fillStyle = '#1e293b';
+                        ctx.font = `${12 / this.view.scale}px sans-serif`;
+                        ctx.fillText(`P${i + 1}`, p.x + 8 / this.view.scale, p.y - 8 / this.view.scale);
+                        ctx.fillStyle = '#2563eb';
+                    });
+                }
+                ctx.restore();
+
+                if (this.cursorPos && (this.mode === 'calibration' || this.mode === 'digitize')) {
+                    const imgLeft = this.view.x;
+                    const imgTop = this.view.y;
+                    const imgRight = this.view.x + this.image.width * this.view.scale;
+                    const imgBottom = this.view.y + this.image.height * this.view.scale;
+
+                    const x = Math.max(imgLeft, Math.min(this.cursorPos.x, imgRight));
+                    const y = Math.max(imgTop, Math.min(this.cursorPos.y, imgBottom));
+
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.95)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(imgLeft, y);
+                    ctx.lineTo(imgRight, y);
+                    ctx.moveTo(x, imgTop);
+                    ctx.lineTo(x, imgBottom);
+                    ctx.stroke();
+                }
+            }
+
+            updateTooltip(screenPos) {
+                const tooltip = document.getElementById('tooltip');
+                if (!this.image || !this.isCalibrated) { tooltip.style.display = 'none'; return; }
+                const imgPos = this.screenToImage(screenPos.x, screenPos.y);
+                if (imgPos.x < 0 || imgPos.y < 0 || imgPos.x > this.image.width || imgPos.y > this.image.height) { tooltip.style.display = 'none'; return; }
+                const real = this.pixelToReal(imgPos.x, imgPos.y);
+                const fmt = (n) => n === null ? 'N/A' : (Math.abs(n) < 0.001 || Math.abs(n) > 10000 ? n.toExponential(4) : n.toFixed(4));
+                tooltip.innerHTML = `X: ${fmt(real.x)}<br>Y: ${fmt(real.y)}`;
+                tooltip.style.display = 'block';
+                tooltip.style.left = (screenPos.x + 15) + 'px'; tooltip.style.top = (screenPos.y + 15) + 'px';
+            }
+
+            updateTable() {
+                const tbody = document.querySelector('#data-table tbody');
+                tbody.innerHTML = '';
+                document.getElementById('point-count').textContent = this.digitizedPoints.length;
+                this.digitizedPoints.forEach((p, i) => {
+                    const real = this.pixelToReal(p.x, p.y);
+                    const fmt = (n) => n === null ? '---' : n.toFixed(5);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>P${i+1}</td><td>${fmt(real.x)}</td><td>${fmt(real.y)}</td><td><button class="btn btn-danger btn-sm" onclick="app.removePoint(${i})">&times;</button></td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            exportData(fmt) {
+                if (!this.digitizedPoints.length) return this.showToast("No data.");
+                let content = "", mimeType = "", ext = "";
+                const data = this.digitizedPoints.map((p, i) => {
+                    const r = this.pixelToReal(p.x, p.y);
+                    return { id: `P${i+1}`, x: r.x, y: r.y };
+                });
+                if (fmt === 'csv') {
+                    content = "ID,X,Y\n"; data.forEach(d => content += `${d.id},${d.x},${d.y}\n`);
+                    mimeType = "text/csv"; ext = "csv";
+                } else {
+                    content = JSON.stringify(data, null, 2); mimeType = "application/json"; ext = "json";
+                }
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `digitized_data.${ext}`; a.click(); URL.revokeObjectURL(url);
+            }
+
+            async copyDataForExcel() {
+                if (!this.digitizedPoints.length) {
+                    this.showToast('No data to copy.');
+                    return;
+                }
+
+                const lines = ['ID\tX\tY'];
+                this.digitizedPoints.forEach((p, i) => {
+                    const r = this.pixelToReal(p.x, p.y);
+                    lines.push(`P${i + 1}\t${r.x}\t${r.y}`);
+                });
+                const tsv = lines.join('\n');
+
+                try {
+                    await navigator.clipboard.writeText(tsv);
+                    this.showToast('Results copied. Paste directly into Excel.');
+                } catch (err) {
+                    console.error(err);
+                    const ta = document.createElement('textarea');
+                    ta.value = tsv;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'absolute';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    this.showToast('Results copied. Paste directly into Excel.');
+                }
+            }
+
+            showToast(msg) {
+                const toast = document.getElementById('toast');
+                toast.textContent = msg; toast.style.opacity = '1';
+                setTimeout(() => toast.style.opacity = '0', 3000);
+            }
+            animate() { requestAnimationFrame(() => this.animate()); }
+        }
+        const app = new ImageDigitizer();
+    </script>
+</body>
+</html>
